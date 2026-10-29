@@ -37,18 +37,6 @@ class BlazeError(RuntimeError):
     pass
 
 
-def api_key():
-    key = os.environ.get("BLAZE_API_KEY", "").strip()
-    if not key:
-        path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "blaze_api_key.txt")
-        if os.path.exists(path):
-            with open(path) as handle:
-                key = handle.read().strip()
-    if not key:
-        raise BlazeError("Blaze API key not found: set BLAZE_API_KEY or put it in custom_nodes/ComfyUI-Blaze/blaze_api_key.txt")
-    return key
-
-
 def call(method, url, key, body=None, timeout=120):
     headers = {"Authorization": "Bearer " + key}
     data = None
@@ -124,8 +112,7 @@ def build_request(prompt, seconds, size, seed, enhance_prompt, model, first_fram
     return body
 
 
-def generate(base_url, body, timeout_minutes):
-    key = api_key()
+def generate(base_url, key, body, timeout_minutes):
     base = base_url.rstrip("/")
     job = json.loads(call("POST", base + "/v1/videos", key, body))
     job_id = job["id"]
@@ -163,6 +150,7 @@ class BlazeVideo:
     def INPUT_TYPES(cls):
         return {
             "required": {
+                "blaze_api_key": ("STRING", {"default": "", "multiline": False}),
                 "prompt": ("STRING", {"multiline": True, "default": ""}),
                 "seconds": ("INT", {"default": 5, "min": 4, "max": 15}),
                 "size": (SIZES, {"default": "768x1344"}),
@@ -180,12 +168,15 @@ class BlazeVideo:
             },
         }
 
-    def run(self, prompt, seconds, size, seed, enhance_prompt, first_frame=None, last_frame=None,
+    def run(self, blaze_api_key, prompt, seconds, size, seed, enhance_prompt, first_frame=None, last_frame=None,
             reference_images=None, voice=None, base_url=DEFAULT_BASE_URL, model=DEFAULT_MODEL, timeout_minutes=30):
+        key = blaze_api_key.strip()
+        if not key:
+            raise BlazeError("Enter your Blaze API key in the blaze_api_key field")
         if not prompt.strip():
             raise BlazeError("Prompt is empty")
         body = build_request(prompt, seconds, size, seed, enhance_prompt, model, first_frame, last_frame, reference_images, voice)
-        job_id, path = generate(base_url, body, timeout_minutes)
+        job_id, path = generate(base_url, key, body, timeout_minutes)
         video = VideoFromFile(path) if VideoFromFile is not None else None
         return {"ui": {"text": [f"{job_id}: {path}"]}, "result": (video, path, job_id)}
 

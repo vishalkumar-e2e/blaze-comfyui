@@ -15,13 +15,13 @@ Then restart ComfyUI. No extra Python packages are needed.
 
 ## API key
 
-The key is never a node field, because ComfyUI saves node fields into workflow files and image metadata. Use one of these:
-- the environment variable `BLAZE_API_KEY`; or
-- a file `custom_nodes/blaze-comfyui/blaze_api_key.txt` containing only the key (it is git-ignored).
+Enter your Blaze API key in the node's **`blaze_api_key`** field. The node reads it only from that field: not from environment variables or files.
+
+ComfyUI saves node fields into the workflow and into the metadata of images it saves, so the key travels with them. Don't share workflow files or saved images that contain your key, and clear the field before sharing.
 
 ## Use
 
-1. Double-click the canvas, search **Blaze Video**, and add it.
+1. Double-click the canvas, search **Blaze Video**, add it, and enter your key in `blaze_api_key`.
 2. Connect **Load Image** to `first_frame`. Optionally connect **Load Audio** to `voice`.
 3. Write the prompt, and set seconds, size and seed. Keep `enhance_prompt` on.
 4. Connect `video` to **Save Video** to watch the result.
@@ -37,6 +37,7 @@ Blaze Video.video ──► Save Video
 
 | Input | Notes |
 |---|---|
+| `blaze_api_key` | Your Blaze API key |
 | `prompt` | The scene prompt |
 | `seconds` | 4 to 15 |
 | `size` | 768x1344 (9:16), 1344x768 (16:9), 768x768, 1024x768, 768x1024, 1344x576 |
